@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Secrets / local test artefacts — never commit tokens
+tokens.json
+*.tokens.json
+.dev/
+
+# OS
+.DS_Store

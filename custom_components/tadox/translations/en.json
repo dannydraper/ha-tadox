@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "timeout": {
+        "title": "Login timed out",
+        "description": "The tado login code expired before it was approved. Submit to get a fresh code and try again."
+      }
+    },
+    "progress": {
+      "wait_for_authorization": "To link your tado account, open this URL in a browser and approve the login:\n\n{url}\n\nIf the code isn't filled in automatically, enter: {code}\n\nThis window updates automatically once you approve."
+    },
+    "abort": {
+      "already_configured": "This tado home is already set up.",
+      "cannot_connect": "Failed to connect to tado. Please try again.",
+      "cannot_authenticate": "Could not authenticate with tado.",
+      "no_homes": "No tado home was found on this account.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tado X options",
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often to poll tado for room state. Lower is fresher but uses more of your daily API request budget. Device and weather data are polled less often."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "humidity": { "name": "Humidity" },
+      "heating_power": { "name": "Heating power" },
+      "outside_temperature": { "name": "Outside temperature" },
+      "api_requests_remaining": { "name": "API requests remaining" }
+    },
+    "binary_sensor": {
+      "window_open": { "name": "Window" },
+      "connectivity": { "name": "Connectivity" },
+      "battery_low": { "name": "Battery" }
+    }
+  }
+}

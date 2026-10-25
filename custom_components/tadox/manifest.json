@@ -1,0 +1,12 @@
+{
+  "domain": "tadox",
+  "name": "Tado X",
+  "codeowners": ["@dannydraper"],
+  "config_flow": true,
+  "documentation": "https://github.com/dannydraper/ha-tadox",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/dannydraper/ha-tadox/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
