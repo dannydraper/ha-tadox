@@ -8,14 +8,21 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
+from homeassistant.helpers.storage import Store
 
 from .api import TadoXClient
-from .const import CONF_TOKENS, DOMAIN
+from .const import CONF_TOKENS, DOMAIN, STORAGE_VERSION
 from .coordinator import TadoXCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.CLIMATE, Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS = [
+    Platform.CLIMATE,
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.NUMBER,
+    Platform.SWITCH,
+]
 
 type TadoXConfigEntry = ConfigEntry[TadoXCoordinator]
 
@@ -30,8 +37,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: TadoXConfigEntry) -> boo
             entry, data={**entry.data, CONF_TOKENS: tokens}
         )
 
+    store: Store = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
+    persisted = await store.async_load() or {}
+
     client = TadoXClient(session, entry.data[CONF_TOKENS], save_tokens)
-    coordinator = TadoXCoordinator(hass, entry, client)
+    coordinator = TadoXCoordinator(hass, entry, client, store, persisted)
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = coordinator

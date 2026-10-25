@@ -21,11 +21,18 @@ Per room:
 
 - **Climate** entity — current temperature, target, `heat` / `off` / `auto`
   (follow schedule) modes, and a heating/idle action.
+- **Timed overrides** — a `tadox.set_climate_timer` action: heat to a
+  temperature until a time of day (e.g. midnight) or for a duration, then
+  automatically resume the schedule.
 - **Sensors** — humidity, heating power (tado's own duty-cycle %).
 - **Binary sensors** — open window, connectivity, low battery.
 
 Per home:
 
+- **Weather cutoff** — a `switch` and a `number`: when enabled, heating is
+  suppressed while the outside temperature is at or above the threshold (so a
+  "21 °C all day" schedule won't fire the boiler on a mild day). A manual or
+  timed override always wins, and a `binary_sensor` shows when it's active.
 - **Outside temperature** (from tado's weather service).
 - **API requests remaining** — a diagnostic sensor so you can watch your daily
   quota.
@@ -59,6 +66,35 @@ directory and restart.
      appended.
 3. Once approved, the integration finishes automatically and your rooms appear.
 
+## Using it
+
+### Timed override ("warm until midnight, then resume")
+
+Call the `tadox.set_climate_timer` action on a room's climate entity with a
+target temperature and **either** an `until` time **or** a `duration`:
+
+```yaml
+action: tadox.set_climate_timer
+target:
+  entity_id: climate.living_room
+data:
+  temperature: 21
+  until: "00:00"        # or, instead:  duration: "02:00:00"
+```
+
+When the timer ends, tado resumes the schedule on its own — so the auto-resume
+still happens even if Home Assistant restarts in the meantime.
+
+### Weather cutoff ("don't heat when it's mild out")
+
+Turn on **Weather cutoff** and set **Weather cutoff temperature** (default
+15 °C). While the outside temperature is at or above that value, rooms that are
+following the schedule are turned off; when it cools below the threshold they
+resume automatically. An explicit change (the card, or a timed override) always
+takes priority, and the **Weather cutoff active** binary sensor shows when
+suppression is in effect. It's off by default, so nothing changes until you
+enable it.
+
 ## Options
 
 **Settings → Devices & services → Tado X → Configure** lets you set the
@@ -74,8 +110,6 @@ if it runs low, increase the polling interval.
 
 ## Roadmap
 
-- A `set_climate_timer` service for timed overrides ("warm until midnight, then
-  resume the schedule").
 - Reading and editing smart schedules.
 - Boost / resume-all buttons.
 

@@ -30,5 +30,12 @@ MIN_SCAN_INTERVAL = 60
 MAX_SCAN_INTERVAL = 3600
 SLOW_CYCLE_EVERY = 6  # fetch devices + weather every 6th room poll (~30 min)
 
+# Weather cutoff ("don't heat when it's mild enough outside"). Persisted in a
+# small Store (not the config entry, so toggling it doesn't reload the entry).
+DEFAULT_WEATHER_CUTOFF_TEMP = 15.0  # °C
+MIN_CUTOFF_TEMP = 5.0
+MAX_CUTOFF_TEMP = 30.0
+STORAGE_VERSION = 1
+
 # Manufacturer string for the device registry.
 MANUFACTURER = "tado°"

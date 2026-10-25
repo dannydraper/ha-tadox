@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import TadoXConfigEntry
-from .entity import TadoXRoomEntity
+from .entity import TadoXHomeEntity, TadoXRoomEntity
 
 
 async def async_setup_entry(
@@ -25,6 +25,7 @@ async def async_setup_entry(
         entities.append(TadoXWindowSensor(coordinator, room_id))
         entities.append(TadoXConnectivitySensor(coordinator, room_id))
         entities.append(TadoXBatterySensor(coordinator, room_id))
+    entities.append(TadoXWeatherCutoffActiveSensor(coordinator))
     async_add_entities(entities)
 
 
@@ -79,3 +80,18 @@ class TadoXBatterySensor(TadoXRoomEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         state = self._device.get("batteryState")
         return state is not None and state != "NORMAL"
+
+
+class TadoXWeatherCutoffActiveSensor(TadoXHomeEntity, BinarySensorEntity):
+    """On while the weather cutoff is currently suppressing heating."""
+
+    _attr_icon = "mdi:radiator-off"
+    _attr_translation_key = "weather_cutoff_active"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.home_id}_weather_cutoff_active"
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.cutoff_active

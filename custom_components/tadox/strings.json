@@ -40,7 +40,34 @@
     "binary_sensor": {
       "window_open": { "name": "Window" },
       "connectivity": { "name": "Connectivity" },
-      "battery_low": { "name": "Battery" }
+      "battery_low": { "name": "Battery" },
+      "weather_cutoff_active": { "name": "Weather cutoff active" }
+    },
+    "number": {
+      "weather_cutoff_temperature": { "name": "Weather cutoff temperature" }
+    },
+    "switch": {
+      "weather_cutoff": { "name": "Weather cutoff" }
+    }
+  },
+  "services": {
+    "set_climate_timer": {
+      "name": "Set climate timer",
+      "description": "Heat a room to a temperature until a time of day or for a duration, then automatically resume the schedule.",
+      "fields": {
+        "temperature": {
+          "name": "Temperature",
+          "description": "Target temperature to hold until the timer ends."
+        },
+        "until": {
+          "name": "Until",
+          "description": "Clock time to heat until (e.g. 22:00). If it has already passed today, it rolls over to tomorrow. Use this or Duration, not both."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "How long to heat for (e.g. 2 hours). Use this or Until, not both."
+        }
+      }
     }
   }
 }

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import datetime, time as dt_time, timedelta
 from typing import Any
+
+import voluptuous as vol
 
 from homeassistant.components.climate import (
     ClimateEntity,
@@ -12,7 +15,10 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from . import TadoXConfigEntry
 from .entity import TadoXRoomEntity
@@ -20,6 +26,24 @@ from .entity import TadoXRoomEntity
 MIN_TEMP = 5.0
 MAX_TEMP = 25.0
 DEFAULT_HEAT_TEMP = 20.0
+
+SERVICE_SET_CLIMATE_TIMER = "set_climate_timer"
+ATTR_UNTIL = "until"
+ATTR_DURATION = "duration"
+
+
+def _seconds_until(target: dt_time, now: datetime) -> int:
+    """Seconds from ``now`` to the next occurrence of clock time ``target``.
+
+    If the time has already passed today, it rolls over to tomorrow — so
+    ``until: "00:00"`` called in the evening means "the coming midnight".
+    """
+    nxt = now.replace(
+        hour=target.hour, minute=target.minute, second=0, microsecond=0
+    )
+    if nxt <= now:
+        nxt += timedelta(days=1)
+    return int((nxt - now).total_seconds())
 
 
 async def async_setup_entry(
@@ -31,6 +55,21 @@ async def async_setup_entry(
     coordinator = entry.runtime_data
     async_add_entities(
         TadoXClimate(coordinator, room_id) for room_id in coordinator.data["rooms"]
+    )
+
+    # Register the timed-override service: "heat to X until a time or for a
+    # duration, then resume the schedule" — tado enforces the auto-resume.
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_SET_CLIMATE_TIMER,
+        {
+            vol.Required(ATTR_TEMPERATURE): vol.All(
+                vol.Coerce(float), vol.Range(min=MIN_TEMP, max=MAX_TEMP)
+            ),
+            vol.Exclusive(ATTR_UNTIL, "timer_end"): cv.time,
+            vol.Exclusive(ATTR_DURATION, "timer_end"): cv.positive_time_period,
+        },
+        "async_set_climate_timer",
     )
 
 
@@ -112,6 +151,36 @@ class TadoXClimate(TadoXRoomEntity, ClimateEntity):
             self._room_id,
             power="ON",
             temperature=temperature,
+        )
+        await self.coordinator.async_request_refresh()
+
+    async def async_set_climate_timer(
+        self,
+        temperature: float,
+        until: dt_time | None = None,
+        duration: timedelta | None = None,
+    ) -> None:
+        """Heat to ``temperature`` until a clock time or for a duration.
+
+        Sends a TIMER override; tado's cloud resumes the schedule when it
+        expires, so the auto-resume survives a Home Assistant restart.
+        """
+        if until is None and duration is None:
+            raise ServiceValidationError(
+                "Provide either 'until' (a time) or 'duration'."
+            )
+        if duration is not None:
+            seconds = int(duration.total_seconds())
+        else:
+            seconds = _seconds_until(until, dt_util.now())
+        if seconds <= 0:
+            raise ServiceValidationError("The timer must end in the future.")
+        await self.coordinator.client.async_set_overlay(
+            self.coordinator.home_id,
+            self._room_id,
+            power="ON",
+            temperature=temperature,
+            termination={"type": "TIMER", "durationInSeconds": seconds},
         )
         await self.coordinator.async_request_refresh()
 
