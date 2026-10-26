@@ -68,6 +68,11 @@ directory and restart.
 
 ## Using it
 
+> 📖 **Full setup & recipes:** see **[docs/guide.md](docs/guide.md)** — the
+> mental model of tado overrides, every entity, and copy-paste recipes
+> including a **weather-aware 9am–10pm schedule**, a boost button, and how to
+> let Home Assistant manage the heating.
+
 ### Timed override ("warm until midnight, then resume")
 
 Call the `tadox.set_climate_timer` action on a room's climate entity with a
