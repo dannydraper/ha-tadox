@@ -234,6 +234,10 @@ class TadoXClient:
 
     async def async_resume_schedule(self, home_id: int, room_id: int) -> None:
         """Clear any override and follow the smart schedule again."""
+        # tado rejects a body-less POST with "Unsupported content type";
+        # send an empty JSON object so aiohttp sets Content-Type: application/json.
         await self._request(
-            "POST", f"{HOPS_API}/homes/{home_id}/rooms/{room_id}/resumeSchedule"
+            "POST",
+            f"{HOPS_API}/homes/{home_id}/rooms/{room_id}/resumeSchedule",
+            {},
         )
